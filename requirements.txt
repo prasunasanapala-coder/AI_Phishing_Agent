@@ -1,0 +1,13 @@
+streamlit
+openai
+langchain
+langgraph
+python-dotenv
+beautifulsoup4
+pandas
+tldextract
+validators
+requests
+python-whois
+plotly
+reportlab

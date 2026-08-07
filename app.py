@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st  # pyright: ignore[reportMissingImports]
 
 from src.parser.parser import parse_email
 from src.tools.sender_analyzer import analyze_sender
@@ -8,6 +8,7 @@ from src.tools.attachment_analyzer import analyze_attachments
 from src.tools.header_analyzer import analyze_headers
 from src.scoring.risk_engine import calculate_risk
 from src.llm.agent import investigate_email
+from src.report.ioc_extractor import extract_iocs
 
 st.set_page_config(
     page_title="AI Phishing Investigation Agent",
@@ -41,6 +42,8 @@ if uploaded_file:
     attachment_result = analyze_attachments(
         email["attachments"]
     )
+    # Extract Indicators of Compromise
+    iocs = extract_iocs(email)
 
     # Risk calculation
     risk = calculate_risk(
@@ -210,6 +213,58 @@ if uploaded_file:
         st.success("No attachments present.")
 
     st.divider()
+    st.divider()
+    st.divider()
+
+    # ==========================
+    # Indicators of Compromise (IOCs)
+    # ==========================
+    st.header("🚨 Indicators of Compromise (IOCs)")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("📧 Email Addresses")
+
+        if iocs["emails"]:
+         for item in iocs["emails"]:
+            st.write(f"• {item}")
+         else:
+            st.write("None")
+
+        st.subheader("🌐 Domains")
+
+        if iocs["domains"]:
+          for item in iocs["domains"]:
+            st.write(f"• {item}")
+        else:
+            st.write("None")
+
+        st.subheader("🖥️ IP Addresses")
+
+        if iocs["ips"]:
+            for item in iocs["ips"]:
+             st.write(f"• {item}")
+        else:
+            st.write("None")
+
+    with col2:
+
+        st.subheader("🔗 URLs")
+
+        if iocs["urls"]:
+         for item in iocs["urls"]:
+            st.write(f"• {item}")
+         else:
+          st.write("None")
+
+         st.subheader("📎 Attachments")
+
+        if iocs["attachments"]:
+         for item in iocs["attachments"]:
+            st.write(f"• {item}")
+        else:
+            st.write("None")    
 
     # ==========================
     # Email Body

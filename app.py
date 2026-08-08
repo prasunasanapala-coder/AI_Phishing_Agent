@@ -9,6 +9,7 @@ from src.tools.header_analyzer import analyze_headers
 from src.scoring.risk_engine import calculate_risk
 from src.llm.agent import investigate_email
 from src.report.ioc_extractor import extract_iocs
+from src.report.pdf_generator import generate_pdf
 
 st.set_page_config(
     page_title="AI Phishing Investigation Agent",
@@ -62,6 +63,21 @@ if uploaded_file:
         attachment_result,
         header_result,
         risk
+    )
+    # Generate PDF Investigation Report
+    pdf_filename = "Phishing_Investigation_Report.pdf"
+
+    generate_pdf(
+        pdf_filename,
+        email,
+        sender_result,
+        header_result,
+        url_results,
+        content_result,
+        attachment_result,
+        iocs,
+        risk,
+        report,
     )
 
     st.success("Email parsed successfully!")
@@ -285,3 +301,19 @@ if uploaded_file:
     st.header("🤖 AI Investigation Report")
 
     st.markdown(report)
+    # ==========================
+    # Investigation PDF Report
+    # ==========================
+
+    st.divider()
+
+    st.header("📄 Investigation Report")
+
+    with open(pdf_filename, "rb") as pdf_file:
+
+        st.download_button(
+            label="⬇ Download Investigation Report",
+            data=pdf_file,
+            file_name=pdf_filename,
+            mime="application/pdf",
+        )

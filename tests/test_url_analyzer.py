@@ -41,3 +41,11 @@ def test_suspicious_keywords():
     assert "Contains keyword 'login'." in result["findings"]
     assert "Contains keyword 'verify'." in result["findings"]
     assert "Contains keyword 'account'." in result["findings"]
+
+def test_keyword_inside_larger_word_is_not_flagged():
+    result = analyze_url(
+        "https://example.com/bloginvoices"
+    )
+
+    assert result["risk_score"] == 0
+    assert result["findings"] == []

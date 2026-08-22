@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urlparse
 import ipaddress
 
@@ -64,7 +65,7 @@ def analyze_url(url):
         url_lower = url.lower()
 
         for keyword in SUSPICIOUS_KEYWORDS:
-            if keyword in url_lower:
+            if re.search(rf"\b{re.escape(keyword)}\b", url_lower):
                 result["risk_score"] += 10
                 result["findings"].append(
                     f"Contains keyword '{keyword}'."

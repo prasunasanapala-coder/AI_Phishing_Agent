@@ -54,16 +54,38 @@ if uploaded_file:
         attachment_result
     )
 
+   # ==========================
     # AI Investigation
-    report = investigate_email(
-        sender_result,
-        url_results,
-        content_result,
-        attachment_result,
-        header_result,
-        risk,
-        email,
-    )
+    # ==========================
+
+    # Create a unique identifier for the uploaded email.
+    # This prevents unnecessary Gemini API calls when Streamlit
+    # reruns the application for the same uploaded file.
+    file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+
+    # Generate the AI report only when:
+    # 1. No previous report exists, OR
+    # 2. A different email has been uploaded.
+    if (
+        "ai_report" not in st.session_state
+        or st.session_state.get("ai_report_file_id") != file_id
+    ):
+
+        with st.spinner("🤖 Generating AI investigation report..."):
+
+            st.session_state.ai_report = investigate_email(
+                sender_result,
+                url_results,
+                content_result,
+                attachment_result,
+                header_result,
+                risk,
+                email,
+            )
+
+            st.session_state.ai_report_file_id = file_id
+
+    report = st.session_state.ai_report
     # Generate PDF Investigation Report
     pdf_filename = "Phishing_Investigation_Report.pdf"
 

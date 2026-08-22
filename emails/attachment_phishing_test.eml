@@ -1,0 +1,24 @@
+From: accounts@acme-example.com
+To: employee@example.com
+Subject: Urgent Invoice Document
+Date: Wed, 22 Jul 2026 09:30:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: text/plain; charset="UTF-8"
+
+Hello,
+
+Please review the attached invoice document as soon as possible.
+
+Regards,
+Accounts Team
+
+--BOUNDARY
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="invoice.exe"
+
+This is a harmless test attachment placeholder.
+
+--BOUNDARY--

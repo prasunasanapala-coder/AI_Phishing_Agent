@@ -1,0 +1,24 @@
+From: accounts@acme-example.com
+To: employee@example.com
+Subject: Monthly Invoice
+Date: Wed, 22 Jul 2026 09:30:00 +0000
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: text/plain; charset="UTF-8"
+
+Hello,
+
+Please find the monthly invoice attached for your records.
+
+Regards,
+Accounts Team
+
+--BOUNDARY
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="invoice.pdf"
+
+This is a harmless test attachment.
+
+--BOUNDARY--

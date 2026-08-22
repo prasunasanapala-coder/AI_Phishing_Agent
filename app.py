@@ -51,8 +51,7 @@ if uploaded_file:
         sender_result,
         url_results,
         content_result,
-        attachment_result,
-        header_result
+        attachment_result
     )
 
     # AI Investigation
@@ -62,7 +61,8 @@ if uploaded_file:
         content_result,
         attachment_result,
         header_result,
-        risk
+        risk,
+        email,
     )
     # Generate PDF Investigation Report
     pdf_filename = "Phishing_Investigation_Report.pdf"
@@ -229,8 +229,6 @@ if uploaded_file:
         st.success("No attachments present.")
 
     st.divider()
-    st.divider()
-    st.divider()
 
     # ==========================
     # Indicators of Compromise (IOCs)
@@ -280,7 +278,9 @@ if uploaded_file:
          for item in iocs["attachments"]:
             st.write(f"• {item}")
         else:
-            st.write("None")    
+            st.write("None")  
+
+    st.divider()          
 
     # ==========================
     # Email Body

@@ -66,7 +66,49 @@ def generate_pdf(
         )
     )
 
+    story.append(Spacer(1, 0.15 * inch))
+
+    # ----------------------------------------------------
+    # Risk Contribution Breakdown
+    # ----------------------------------------------------
+
+    story.append(
+        Paragraph(
+            "<b>Risk Contribution Breakdown</b>",
+            styles["Heading2"],
+        )
+    )
+
+    # Get scoring information from the risk engine
+    raw_scores = risk.get("raw_scores", {})
+    contributions = risk.get("contributions", {})
+    maximums = risk.get("maximums", {})
+
+    story.append(
+        Paragraph(
+            f"""
+            <b>Sender:</b>
+            {raw_scores.get('sender', 0)} raw →
+            <b>{contributions.get('sender', 0)}/{maximums.get('sender', 25)}</b><br/>
+
+            <b>URLs:</b>
+            {raw_scores.get('url', 0)} raw →
+            <b>{contributions.get('url', 0)}/{maximums.get('url', 25)}</b><br/>
+
+            <b>Content:</b>
+            {raw_scores.get('content', 0)} raw →
+            <b>{contributions.get('content', 0)}/{maximums.get('content', 35)}</b><br/>
+
+            <b>Attachments:</b>
+            {raw_scores.get('attachment', 0)} raw →
+            <b>{contributions.get('attachment', 0)}/{maximums.get('attachment', 15)}</b>
+            """,
+            styles["BodyText"],
+        )
+    )
+
     story.append(Spacer(1, 0.2 * inch))
+
 
     # ----------------------------------------------------
     # Email Details
@@ -454,17 +496,154 @@ def generate_pdf(
 
     story.append(
         Paragraph(
-            "<b>Indicators of Compromise</b>",
+            "<b>Indicators of Compromise (IOCs)</b>",
             styles["Heading1"],
         )
     )
 
+    # Email Addresses
     story.append(
         Paragraph(
-            str(iocs),
-            styles["BodyText"],
+            "<b>Email Addresses</b>",
+            styles["Heading2"],
+        )
+        )
+
+    if iocs["emails"]:
+
+        for email_address in iocs["emails"]:
+
+            story.append(
+                Paragraph(
+                    f"• {email_address}",
+                    styles["BodyText"],
+                )
+            )
+
+    else:
+
+        story.append(
+            Paragraph(
+                "No email addresses detected.",
+                styles["BodyText"],
+            )
+        )
+
+
+    # URLs
+    story.append(
+        Paragraph(
+            "<b>URLs</b>",
+            styles["Heading2"],
         )
     )
+
+    if iocs["urls"]:
+
+        for url in iocs["urls"]:
+
+            story.append(
+                Paragraph(
+                    f"• {url}",
+                    styles["BodyText"],
+                )
+            )
+
+    else:
+
+        story.append(
+            Paragraph(
+                "No URLs detected.",
+                styles["BodyText"],
+            )
+        )
+
+
+    # Domains
+    story.append(
+        Paragraph(
+            "<b>Domains</b>",
+            styles["Heading2"],
+        )
+    )
+
+    if iocs["domains"]:
+
+        for domain in iocs["domains"]:
+
+            story.append(
+                Paragraph(
+                    f"• {domain}",
+                    styles["BodyText"],
+                )
+            )
+
+    else:
+
+        story.append(
+            Paragraph(
+                "No domains detected.",
+                styles["BodyText"],
+            )
+        )
+
+
+    # IP Addresses
+    story.append(
+            Paragraph(
+                "<b>IP Addresses</b>",
+                styles["Heading2"],
+            )
+        )
+
+    if iocs["ips"]:
+
+        for ip_address in iocs["ips"]:
+
+            story.append(
+                Paragraph(
+                    f"• {ip_address}",
+                    styles["BodyText"],
+                )
+            )
+
+    else:
+
+        story.append(
+            Paragraph(
+                "No IP addresses detected.",
+                styles["BodyText"],
+            )
+        )
+
+
+    # Attachments
+    story.append(
+        Paragraph(
+            "<b>Attachments</b>",
+            styles["Heading2"],
+        )
+    )
+
+    if iocs["attachments"]:
+
+        for attachment in iocs["attachments"]:
+
+            story.append(
+                Paragraph(
+                    f"• {attachment}",
+                    styles["BodyText"],
+                )
+            )
+
+    else:
+
+        story.append(
+            Paragraph(
+                "No attachments detected.",
+                styles["BodyText"],
+            )
+        )
 
     story.append(Spacer(1, 0.2 * inch))
 

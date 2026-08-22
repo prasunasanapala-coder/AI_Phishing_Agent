@@ -1,0 +1,21 @@
+From: team@acme-example.com
+To: employee@example.com
+Subject: Weekly Team Meeting
+Date: Wed, 22 Jul 2026 09:30:00 +0000
+MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+
+Hello,
+
+This is a reminder that our weekly team meeting is scheduled for
+Friday, 24 July 2026 at 10:00 AM.
+
+The meeting will cover:
+- Project progress
+- Upcoming tasks
+- Open questions
+
+Please bring any updates you would like to discuss.
+
+Best regards,
+Project Team

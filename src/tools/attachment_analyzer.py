@@ -38,11 +38,16 @@ def analyze_attachments(attachments):
 
         # Double extension
         parts = filename.split(".")
-        if len(parts) > 2:
-            result["risk_score"] += 20
-            result["findings"].append(
-                f"Double extension detected: {attachment}"
-            )
+
+        if len(parts) >= 3:
+            final_extension = "." + parts[-1]
+            
+            if final_extension in HIGH_RISK:
+                result["risk_score"] += 20
+                result["findings"].append(
+                    f"Double extension detected: {attachment}"
+                )
+            
 
         # High-risk extension
         if ext in HIGH_RISK:

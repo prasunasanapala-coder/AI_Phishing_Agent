@@ -55,4 +55,12 @@ def test_multiple_attachments():
 
     assert "High-risk attachment: invoice.exe" in result["findings"]
     assert "Potentially risky attachment: documents.zip" in result["findings"]
-    
+
+
+def test_normal_multiple_dot_filename():
+    result = analyze_attachments(
+        ["report.final.pdf"]
+    )
+
+    assert result["risk_score"] == 0
+    assert result["findings"] == []

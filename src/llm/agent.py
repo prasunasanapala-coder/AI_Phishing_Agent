@@ -6,11 +6,13 @@ from google import genai
 
 from src.llm.prompts import SYSTEM_PROMPT
 
+
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
 
 client = genai.Client(api_key=API_KEY)
+
 
 # Models to try in order
 MODELS = [
@@ -18,6 +20,8 @@ MODELS = [
     "gemini-3.1-flash-lite",
     "gemini-3.6-flash",
 ]
+
+
 def investigate_email(
     sender_result,
     url_results,
@@ -39,7 +43,7 @@ def investigate_email(
     - Attachment analysis
     - Header analysis
 
-    Gemini is used to interpret and explain the supplied evidence.
+    Gemini is used only to interpret and explain the supplied evidence.
     """
 
     # ----------------------------------------------------
@@ -96,236 +100,358 @@ Treat these values as authoritative evidence.
 ```json
 {investigation_json}
 
-1. Use ONLY the evidence supplied in the JSON above.
+==================================================
+IMPORTANT INVESTIGATION RULES
 
-2. Do NOT invent:
-   - Report dates
-   - Analyst names
-   - Organization names
-   - Incident IDs
-   - Quarantine status
-   - Blocking actions
-   - User actions
-   - Domain registration details
-   - IP addresses
-   - Infrastructure details
-   - Malware execution
-   - Compromise
-   - Any other unsupported facts
+    Use ONLY the evidence supplied in the JSON above.
 
-3. Do NOT claim that an email was quarantined, blocked, deleted,
-   or reported unless that information is explicitly supplied.
+    Do NOT invent:
 
-4. Clearly distinguish observed evidence from inferred conclusions.
+        Report dates
 
-5. If information cannot be determined from the supplied evidence,
-   state:
-   "Not determined from available evidence."
+        Analyst names
 
-6. Use the supplied email date exactly.
+        Organization names
+
+        Incident IDs
+
+        Quarantine status
+
+        Blocking actions
+
+        User actions
+
+        Domain registration details
+
+        IP addresses
+
+        Infrastructure details
+
+        Malware execution
+
+        Compromise
+
+        Any other unsupported facts
+
+    Do NOT claim that an email was:
+
+        quarantined
+
+        blocked
+
+        deleted
+
+        reported
+
+    unless that information is explicitly supplied.
+
+    Clearly distinguish observed evidence from inferred conclusions.
+
+    If information cannot be determined from the supplied evidence,
+    state:
+
+    "Not determined from available evidence."
+
+    Use the supplied email date exactly.
 
 ==================================================
 RISK ENGINE RULES
-==================================================
 
-7. The application's risk engine is authoritative for:
-   - Overall risk score
-   - Overall risk level
+    The application's risk engine is authoritative for:
 
-8. Do NOT calculate, modify, reinterpret, or override the supplied
-   risk score or risk level.
+        Overall risk score
 
-9. Reproduce the supplied risk score and risk level exactly.
+        Overall risk level
 
-10. The phishing verdict is separate from the numerical risk level.
+    Do NOT calculate, modify, reinterpret, or override the supplied
+    risk score or risk level.
+
+    Reproduce the supplied risk score and risk level exactly.
+
+    The phishing verdict is separate from the numerical risk level.
 
 ==================================================
 CONTENT RULES
-==================================================
 
-11. A suspicious keyword alone is NOT sufficient evidence for phishing.
+    A suspicious keyword alone is NOT sufficient evidence for phishing.
 
-12. Do not classify an email as suspicious solely because it contains
+    Do not classify an email as suspicious solely because it contains
     generic terms such as:
-    - invoice
-    - payment
-    - meeting
-    - account
-    - security
-    - document
+
+        invoice
+
+        payment
+
+        meeting
+
+        account
+
+        security
+
+        document
 
 ==================================================
 ATTACHMENT RULES
-==================================================
 
-13. A normal attachment does not automatically indicate maliciousness.
+    A normal attachment does not automatically indicate maliciousness.
 
-14. Only describe an attachment as suspicious when the supplied
+    Only describe an attachment as suspicious when the supplied
     attachment analysis provides supporting evidence.
 
-15. Never claim that an attachment was executed.
+    Never claim that an attachment was executed.
 
-16. Never claim that an attachment delivered malware unless the
+    Never claim that an attachment delivered malware unless the
     supplied evidence explicitly establishes this.
 
 ==================================================
 HEADER RULES
-==================================================
 
-17. "Not Found" for SPF, DKIM, or DMARC does not prove that the
-    corresponding DNS record does not exist.
+    "Not Found", "None", or unavailable SPF, DKIM, or DMARC
+    information MUST NOT be interpreted as a failed authentication
+    result.
 
-18. Do not claim DNS authentication checks were performed unless
-    DNS evidence is explicitly supplied.
+    Do not claim that SPF, DKIM, or DMARC DNS records are:
 
-19. Missing authentication information is not proof of maliciousness.
+        missing
+
+        absent
+
+        invalid
+
+        failed
+
+    unless explicit DNS or authentication evidence is supplied.
+
+    Do not claim that DNS authentication checks were performed unless
+    DNS lookup or authentication evidence is explicitly supplied.
+
+    Missing or unavailable SPF, DKIM, or DMARC information MUST NOT
+    be used as supporting evidence for:
+
+        phishing
+
+        maliciousness
+
+        fraud
+
+        impersonation
+
+        the final conclusion
+
+    When SPF, DKIM, or DMARC information is unavailable, state:
+
+    "Authentication results were not available in the supplied
+    header evidence."
+
+    The phishing verdict must be supported by other supplied evidence
+    when SPF, DKIM, or DMARC information is unavailable.
+
+    Do not describe the absence of authentication information as
+    evidence that legitimate authentication failed unless the
+    supplied data explicitly contains a failed authentication result.
+
+    Distinguish email-header observations from DNS authentication
+    checks.
 
 ==================================================
 MITRE ATT&CK RULES
-==================================================
 
-20. Only use valid MITRE ATT&CK Enterprise technique IDs and names.
+    Only use valid MITRE ATT&CK Enterprise technique IDs and names.
 
-21. Never invent or rename ATT&CK techniques.
+    Never invent or rename ATT&CK techniques.
 
-22. Do not force a MITRE technique into the report.
+    Do not force a MITRE technique into the report.
 
-23. T1566.002 — Phishing: Spearphishing Link may only be used when
+    T1566.002 — Phishing: Spearphishing Link may only be used when
     an actual suspicious URL or link is present.
 
-24. T1566.001 — Phishing: Spearphishing Attachment may only be used
+    T1566.001 — Phishing: Spearphishing Attachment may only be used
     when a suspicious attachment is present.
 
-25. Do not map brand impersonation or lookalike domains to an
+    Do not map brand impersonation or lookalike domains to an
     ATT&CK technique unless the evidence clearly supports it.
 
-26. If no technique is supported, state:
+    If no technique is supported, state:
 
     "No MITRE ATT&CK technique applicable based on available evidence."
 
 ==================================================
 REPORT FORMAT AND CONCLUSION RULES
-==================================================
 
-27. Do not use missing or unavailable SPF, DKIM, or DMARC results
-    as supporting evidence for a phishing verdict or maliciousness
-    unless an explicit authentication failure is present.
+    The Final Conclusion must be consistent with the supplied evidence
+    and must not become stronger than the evidence presented in the
+    investigation data.
 
-28. The Final Conclusion must be consistent with the supplied
-    evidence and must not become stronger than the evidence
-    presented in the investigation data.
-
-29. The report MUST contain exactly these eight sections,
+    The report MUST contain exactly these eight sections,
     in exactly this order:
 
-    1. Executive Summary
-    2. Phishing Verdict
-    3. Risk Assessment
-    4. Indicators of Compromise (IOCs)
-    5. Header Analysis Explanation
-    6. MITRE ATT&CK Mapping
-    7. Recommended Actions
-    8. Final Conclusion
+        Executive Summary
 
-30. Do NOT add any other sections, including:
-    - Attack Chain
-    - User Awareness Tips
-    - Analyst Notes
-    - Incident Timeline
-    - Detection Summary
-    - Technical Analysis
-    - Additional Recommendations
+        Phishing Verdict
 
-31. Do not describe exploitation, execution, persistence,
+        Risk Assessment
+
+        Indicators of Compromise (IOCs)
+
+        Header Analysis Explanation
+
+        MITRE ATT&CK Mapping
+
+        Recommended Actions
+
+        Final Conclusion
+
+    Do NOT add any other sections, including:
+
+        Attack Chain
+
+        User Awareness Tips
+
+        Analyst Notes
+
+        Incident Timeline
+
+        Detection Summary
+
+        Technical Analysis
+
+        Additional Recommendations
+
+    Do not describe exploitation, execution, persistence,
     credential theft, malware delivery, or user interaction
     unless the supplied evidence explicitly establishes it.
 
-32. The presence of an executable attachment is evidence of a
+    The presence of an executable attachment is evidence of a
     potentially dangerous attachment. It is NOT evidence that
     exploitation or execution occurred.
 
-33. Do not describe why the investigation was initiated unless
+    Do not describe why the investigation was initiated unless
     that reason is explicitly supplied in the evidence.
 
-34. Do not add headings or sections outside the required
+    Do not add headings or sections outside the required
     eight-section structure.
+
 ==================================================
 REPORT REQUIREMENTS
-==================================================
 
 Generate a professional phishing investigation report containing:
 
-1. Executive Summary
+    Executive Summary
 
-2. Phishing Verdict
+    Summarize the observed evidence and explain why the email is
+    legitimate, suspicious, phishing, or highly malicious.
 
-Choose exactly one:
+    Phishing Verdict
 
-- Legitimate
-- Suspicious
-- Phishing
-- Highly Malicious
+    Choose exactly one:
 
-3. Risk Assessment
+        Legitimate
 
-Include the supplied:
+        Suspicious
 
-- Overall Risk Score
-- Overall Risk Level
-- Main evidence supporting the assessment
+        Phishing
 
-4. Indicators of Compromise
+        Highly Malicious
 
-Include only indicators supported by the evidence:
+    Risk Assessment
 
-- Suspicious sender
-- Suspicious URLs
-- Suspicious domains
-- IP addresses
-- Attachments
-- Header anomalies
-- Social engineering indicators
+    Include the supplied:
 
-5. Header Analysis Explanation
+        Overall Risk Score
 
-Explain:
+        Overall Risk Level
 
-- SPF
-- DKIM
-- DMARC
-- Reply-To
-- Return-Path
-- Received headers
+        Main evidence supporting the assessment
 
-6. MITRE ATT&CK Mapping
+    Indicators of Compromise (IOCs)
 
-For each supported technique include:
+    Include only indicators supported by the evidence:
 
-- Technique ID
-- Technique name
-- Evidence
-- Confidence
+        Suspicious sender
 
-Use only:
+        Suspicious URLs
 
-- Confirmed
-- Potential
+        Suspicious domains
 
-7. Recommended Actions
+        IP addresses
 
-Provide practical defensive recommendations.
+        Attachments
 
-Do not claim that these actions have already been performed.
+        Header anomalies
 
-8. Final Conclusion
+        Social engineering indicators
 
-Provide an evidence-based conclusion.
+    Header Analysis Explanation
+
+    Explain the supplied results for:
+
+        SPF
+
+        DKIM
+
+        DMARC
+
+        Reply-To
+
+        Return-Path
+
+        Received headers
+
+    Do not treat missing information as proof of malicious activity.
+
+    MITRE ATT&CK Mapping
+
+    Include relevant techniques only when supported by the evidence.
+
+    For each supported technique provide:
+
+        Technique ID
+
+        Technique name
+
+        Evidence
+
+        Confidence
+
+    Use only:
+
+        Confirmed
+
+        Potential
+
+    Recommended Actions
+
+    Provide practical defensive recommendations.
+
+    Do not claim that these actions have already been performed.
+
+    Final Conclusion
+
+    Provide an evidence-based conclusion.
 
 ==================================================
-FINAL REQUIREMENT
-==================================================
+FINAL EVIDENCE PRIORITY RULE
 
-Never invent evidence.
+The deterministic investigation data has higher authority than
+general cybersecurity knowledge.
+
+If the supplied evidence says "Not Found", do not transform that
+into:
+
+    failed
+
+    missing
+
+    absent
+
+    invalid
+
+unless explicit evidence supports that conclusion.
+
+If a fact is not explicitly supported by the supplied evidence,
+do not introduce it into the report.
+
+Never present assumptions as confirmed facts.
 Never invent investigation metadata.
 Never invent actions that were not performed.
 Never override the deterministic risk score or risk level.
@@ -333,7 +459,7 @@ Never force a MITRE ATT&CK technique.
 """
 
     # ----------------------------------------------------
-    # Generate AI report
+    # Generate AI report using model fallback
     # ----------------------------------------------------
 
     last_error = None

@@ -13,9 +13,23 @@ def test_extract_urls():
 
     assert result == [
         "https://example.com/login",
-        "https://evil.com/verify.",
+        "https://evil.com/verify"
     ]
 
+def test_extract_urls_removes_trailing_punctuation():
+    text = """
+    Visit https://example.com/login.
+    Then visit https://evil.com/verify,
+    and finally https://test.com/account!
+    """
+
+    result = extract_urls(text)
+
+    assert result == [
+        "https://example.com/login",
+        "https://evil.com/verify",
+        "https://test.com/account",
+    ]
 
 def test_extract_urls_empty_text():
     result = extract_urls("")

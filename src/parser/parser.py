@@ -9,7 +9,16 @@ def extract_urls(text):
         return []
 
     pattern = r"https?://[^\s<>\"]+"
-    return re.findall(pattern, text)
+
+    urls = re.findall(pattern, text)
+    
+    # Remove common sentence punctuation from the end of URLs.
+    urls = [
+        url.rstrip(".,!?;:)]}")
+        for url in urls
+    ]
+
+    return urls
 
 
 def parse_email(uploaded_file):

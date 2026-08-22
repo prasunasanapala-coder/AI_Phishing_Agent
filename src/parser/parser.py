@@ -1,6 +1,14 @@
 import re
 from email import policy
 from email.parser import BytesParser
+import os
+
+
+def sanitize_attachment_filename(filename):
+    if not filename:
+        return ""
+
+    return os.path.basename(filename)
 
 
 def extract_urls(text):
@@ -11,7 +19,7 @@ def extract_urls(text):
     pattern = r"https?://[^\s<>\"]+"
 
     urls = re.findall(pattern, text)
-    
+
     # Remove common sentence punctuation from the end of URLs.
     urls = [
         url.rstrip(".,!?;:)]}")
@@ -48,7 +56,8 @@ def parse_email(uploaded_file):
             filename = part.get_filename()
 
             if filename:
-                email_data["attachments"].append(filename)
+                safe_filename = sanitize_attachment_filename(filename)
+                email_data["attachments"].append(safe_filename)
                 continue
 
             if content_type == "text/plain":

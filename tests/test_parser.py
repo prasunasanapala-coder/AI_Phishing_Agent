@@ -101,7 +101,7 @@ test attachment content
     assert "attached invoice" in result["body"]
     assert "invoice.exe" in result["attachments"]
 
-
+    
 def test_parse_html_email():
     eml = b"""\
 From: security@example.com
@@ -128,3 +128,32 @@ your account.</p>
 
     assert result["html"] != ""
     assert "https://example.com/verify" in result["urls"]
+
+
+def test_attachment_filename_is_sanitized():
+    eml = b"""\
+From: attacker@example.com
+To: employee@example.com
+Subject: Test
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: text/plain; charset="utf-8"
+
+Please see the attachment.
+
+--BOUNDARY
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename="../../invoice.exe"
+
+test attachment
+
+--BOUNDARY--
+"""
+
+    uploaded_file = BytesIO(eml)
+
+    result = parse_email(uploaded_file)
+
+    assert result["attachments"] == ["invoice.exe"]

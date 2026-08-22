@@ -76,3 +76,31 @@ def test_executable_attachment():
 
     assert result["total_score"] == 25
     assert result["risk_level"] == "🟢 Low"
+
+def test_risk_score_never_exceeds_100():
+    result = calculate_risk(
+        {"risk_score": 999},
+        [{"risk_score": 999}],
+        {"risk_score": 999},
+        {"risk_score": 999},
+    )
+
+    assert result["total_score"] == 100
+
+
+def test_risk_contributions_respect_limits():
+    result = calculate_risk(
+        {"risk_score": 40},
+        [{"risk_score": 50}],
+        {"risk_score": 100},
+        {"risk_score": 50},
+    )
+
+    assert result["contributions"] == {
+        "sender": 25,
+        "url": 25,
+        "content": 35,
+        "attachment": 15,
+    }
+
+    assert result["total_score"] == 100

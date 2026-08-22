@@ -331,6 +331,12 @@ REPORT FORMAT AND CONCLUSION RULES
     Do not add headings or sections outside the required
     eight-section structure.
 
+    Do not claim credential harvesting occurred unless the supplied
+    evidence explicitly establishes credential collection or theft.
+
+    A login page or suspicious login URL alone does not establish
+    that credentials were harvested.
+
 ==================================================
 REPORT REQUIREMENTS
 

@@ -27,7 +27,16 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
 
     # Parse email
-    email = parse_email(uploaded_file)
+    try:
+        email = parse_email(uploaded_file)
+
+        if not email:
+            st.error("Unable to parse this email file.")
+            st.stop()
+
+    except Exception as e:
+        st.error(f"Email parsing failed: {e}")
+        st.stop()
 
     # Analyses
     header_result = analyze_headers(email["message"])
@@ -263,16 +272,16 @@ if uploaded_file:
         st.subheader("📧 Email Addresses")
 
         if iocs["emails"]:
-         for item in iocs["emails"]:
-            st.write(f"• {item}")
-         else:
+            for item in iocs["emails"]:
+                st.write(f"• {item}")
+        else:
             st.write("None")
 
         st.subheader("🌐 Domains")
 
         if iocs["domains"]:
-          for item in iocs["domains"]:
-            st.write(f"• {item}")
+            for item in iocs["domains"]:
+                st.write(f"• {item}")
         else:
             st.write("None")
 
@@ -280,29 +289,26 @@ if uploaded_file:
 
         if iocs["ips"]:
             for item in iocs["ips"]:
-             st.write(f"• {item}")
+                st.write(f"• {item}")
         else:
             st.write("None")
 
     with col2:
-
         st.subheader("🔗 URLs")
 
         if iocs["urls"]:
-         for item in iocs["urls"]:
-            st.write(f"• {item}")
-         else:
-          st.write("None")
+            for item in iocs["urls"]:
+                st.write(f"• {item}")
+        else:
+            st.write("None")
 
-         st.subheader("📎 Attachments")
+        st.subheader("📎 Attachments")
 
         if iocs["attachments"]:
-         for item in iocs["attachments"]:
-            st.write(f"• {item}")
+            for item in iocs["attachments"]:
+                st.write(f"• {item}")
         else:
-            st.write("None")  
-
-    st.divider()          
+            st.write("None")       
 
     # ==========================
     # Email Body

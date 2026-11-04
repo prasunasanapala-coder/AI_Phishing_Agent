@@ -470,8 +470,8 @@ Never force a MITRE ATT&CK technique.
 
     last_error = None
 
-    for model in MODELS:
 
+    for model in MODELS:
         try:
             print(f"Trying model: {model}")
 
@@ -480,14 +480,25 @@ Never force a MITRE ATT&CK technique.
                 contents=prompt,
             )
 
-            print(f"Success with {model}")
+            if response.text:
+                print(f"Success with {model}")
+                return response.text
 
-            return response.text
+            last_error = f"{model} returned an empty response."
 
         except Exception as e:
-
             print(f"{model} failed: {e}")
-
             last_error = e
 
-    return f"Gemini Error:\n\n{last_error}"
+    print(f"All Gemini models failed. Last error: {last_error}")
+
+    return (
+        "## AI Investigation Temporarily Unavailable\n\n"
+        "The Gemini investigation service could not generate a report "
+        "at this time.\n\n"
+        "The deterministic email analysis completed successfully. "
+        "Please use the risk assessment, sender analysis, header "
+        "analysis, URL analysis, content analysis, attachment analysis, "
+        "and IOC findings displayed above.\n\n"
+        "You can retry the AI investigation later."
+    )

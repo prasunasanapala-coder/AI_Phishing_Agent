@@ -1,347 +1,194 @@
-import streamlit as st  # pyright: ignore[reportMissingImports]
 
-from src.parser.parser import parse_email
-from src.tools.sender_analyzer import analyze_sender
-from src.tools.url_analyzer import analyze_url
-from src.tools.content_analyzer import analyze_content
-from src.tools.attachment_analyzer import analyze_attachments
-from src.tools.header_analyzer import analyze_headers
-from src.scoring.risk_engine import calculate_risk
-from src.llm.agent import investigate_email
-from src.report.ioc_extractor import extract_iocs
-from src.report.pdf_generator import generate_pdf
+import streamlit as st
+
+# ==========================
+# PAGE CONFIGURATION
+# ==========================
 
 st.set_page_config(
-    page_title="AI Phishing Investigation Agent",
+    page_title="Phishing Intelligence",
     page_icon="🛡️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.title("🛡️ AI Phishing Investigation Agent")
 
-uploaded_file = st.file_uploader(
-    "Upload Email",
-    type=["eml"]
+# ==========================
+# CUSTOM STYLING
+# ==========================
+
+st.markdown("""
+<style>
+
+/* Application background */
+.stApp {
+    background: #0b1120;
+    color: #e2e8f0;
+}
+
+.block-container {
+    padding-top: 2rem;
+    max-width: 1400px;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(
+        180deg,
+        #0b1426,
+        #111c30
+    );
+    border-right: 1px solid #263449;
+}
+
+/* Sidebar branding */
+.brand-title {
+    font-size: 19px;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: 0.4px;
+}
+
+.brand-subtitle {
+    font-size: 10px;
+    color: #94a3b8;
+    letter-spacing: 1.3px;
+}
+
+/* Custom navigation links */
+section[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] {
+    background: transparent;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 5px 0;
+    transition: 0.2s ease;
+}
+
+section[data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover {
+    background: #1e293b;
+}
+
+/* Active navigation link */
+section[data-testid="stSidebar"] a[aria-current="page"] {
+    background: #164e63;
+    border-left: 3px solid #38bdf8;
+}
+
+/* Sidebar section label */
+.sidebar-section {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    margin-top: 25px;
+    margin-bottom: 12px;
+}
+
+/* Dividers */
+hr {
+    border-color: #263449;
+}
+
+/* Main metric cards */
+div[data-testid="stMetric"] {
+    background: #172033;
+    border: 1px solid #334155;
+    padding: 18px;
+    border-radius: 14px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# ==========================
+# PAGE DEFINITIONS
+# ==========================
+
+dashboard = st.Page(
+    "pages/1_Dashboard.py",
+    title="Dashboard",
+    icon=":material/dashboard:",
+    default=True
 )
 
-if uploaded_file:
+investigation = st.Page(
+    "pages/2_📧_Email_Investigation.py",
+    title="Email Investigation",
+    icon=":material/mark_email_unread:"
+)
 
-    # Parse email
-    try:
-        email = parse_email(uploaded_file)
 
-        if not email:
-            st.error("Unable to parse this email file.")
-            st.stop()
+# ==========================
+# HIDE AUTOMATIC NAVIGATION
+# ==========================
 
-    except Exception as e:
-        st.error(f"Email parsing failed: {e}")
-        st.stop()
+navigation = st.navigation(
+    {
+        "WORKSPACE": [
+            dashboard,
+            investigation
+        ]
+    },
+    position="hidden"
+)
 
-    # Analyses
-    header_result = analyze_headers(email["message"])
-    sender_result = analyze_sender(email["sender"])
 
-    url_results = [
-        analyze_url(url)
-        for url in email["urls"]
-    ]
+# ==========================
+# CUSTOM SIDEBAR
+# ==========================
 
-    content_result = analyze_content(email["body"])
+with st.sidebar:
 
-    attachment_result = analyze_attachments(
-        email["attachments"]
-    )
-    # Extract Indicators of Compromise
-    iocs = extract_iocs(email)
-
-    # Risk calculation
-    risk = calculate_risk(
-        sender_result,
-        url_results,
-        content_result,
-        attachment_result
+    # Brand identity
+    st.markdown(
+        '<div style="font-size:36px;">🛡️</div>',
+        unsafe_allow_html=True
     )
 
-   # ==========================
-    # AI Investigation
-    # ==========================
-
-    # Create a unique identifier for the uploaded email.
-    # This prevents unnecessary Gemini API calls when Streamlit
-    # reruns the application for the same uploaded file.
-    file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-
-    # Generate the AI report only when:
-    # 1. No previous report exists, OR
-    # 2. A different email has been uploaded.
-    if (
-        "ai_report" not in st.session_state
-        or st.session_state.get("ai_report_file_id") != file_id
-    ):
-
-        with st.spinner("🤖 Generating AI investigation report..."):
-
-            st.session_state.ai_report = investigate_email(
-                sender_result,
-                url_results,
-                content_result,
-                attachment_result,
-                header_result,
-                risk,
-                email,
-            )
-
-            st.session_state.ai_report_file_id = file_id
-
-    report = st.session_state.ai_report
-    # Generate PDF Investigation Report
-    pdf_filename = "Phishing_Investigation_Report.pdf"
-
-    generate_pdf(
-        pdf_filename,
-        email,
-        sender_result,
-        header_result,
-        url_results,
-        content_result,
-        attachment_result,
-        iocs,
-        risk,
-        report,
+    st.markdown(
+        '<div class="brand-title">PHISHING INTELLIGENCE</div>',
+        unsafe_allow_html=True
     )
 
-    st.success("Email parsed successfully!")
-
-    # ==========================
-    # Overall Threat Assessment
-    # ==========================
-    st.header("🚨 Overall Threat Assessment")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.metric(
-            "Threat Score",
-            f"{risk['total_score']}/100"
-        )
-
-    with col2:
-        st.metric(
-            "Risk Level",
-            risk["risk_level"]
-        )
-
-    st.divider()
-
-    # ==========================
-    # Email Details
-    # ==========================
-    st.header("📧 Email Details")
-
-    st.write("**Sender:**", email["sender"])
-    st.write("**Recipient:**", email["recipient"])
-    st.write("**Subject:**", email["subject"])
-    st.write("**Date:**", email["date"])
-
-    st.divider()
-
-    # ==========================
-    # Sender Analysis
-    # ==========================
-    st.header("🔍 Sender Analysis")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.metric("Sender Email", sender_result["email"])
-        st.metric("Domain", sender_result["domain"])
-
-    with col2:
-        st.metric("Risk Score", sender_result["risk_score"])
-        st.metric(
-            "Lookalike Domain",
-            "Yes" if sender_result["lookalike_brand"] else "No"
-        )
-
-    if sender_result["findings"]:
-        st.warning("Findings")
-        for finding in sender_result["findings"]:
-            st.write(f"• {finding}")
-    else:
-        st.success("No suspicious sender indicators found.")
-
-    st.divider()
-
-    # ==========================
-    # Header Analysis
-    # ==========================
-    st.header("📧 Header Analysis")
-
-    st.write("**SPF:**", header_result["spf"])
-    st.write("**DKIM:**", header_result["dkim"])
-    st.write("**DMARC:**", header_result["dmarc"])
-    st.write("**Reply-To:**", header_result["reply_to"])
-    st.write("**Return-Path:**", header_result["return_path"])
-    st.write("**Received Headers:**", header_result["received_count"])
-    st.write("**Risk Score:**", header_result["risk_score"])
-
-    if header_result["findings"]:
-        st.warning("Findings")
-        for finding in header_result["findings"]:
-            st.write(f"• {finding}")
-    else:
-        st.success("No suspicious header findings detected.")
-
-    st.divider()
-
-    # ==========================
-    # URL Analysis
-    # ==========================
-    st.header("🌐 URL Analysis")
-
-    if url_results:
-
-        for result in url_results:
-
-            st.markdown(f"### {result['url']}")
-            st.write(f"**Domain:** {result['domain']}")
-            st.write(f"**Risk Score:** {result['risk_score']}")
-
-            if result["findings"]:
-                st.warning("Findings")
-                for finding in result["findings"]:
-                    st.write(f"• {finding}")
-
-            st.divider()
-
-    else:
-        st.success("No URLs found.")
-
-    # ==========================
-    # Content Analysis
-    # ==========================
-    st.header("📝 Content Analysis")
-
-    st.metric(
-        "Risk Score",
-        content_result["risk_score"]
+    st.markdown(
+        '<div class="brand-subtitle">'
+        'SECURITY OPERATIONS CENTER'
+        '</div>',
+        unsafe_allow_html=True
     )
 
-    if content_result["findings"]:
-        st.warning("Findings")
-        for finding in content_result["findings"]:
-            st.write(f"• {finding}")
-    else:
-        st.success("No suspicious content detected.")
+    st.markdown("")
+
+    st.success("● ANALYSIS ENGINE READY")
 
     st.divider()
 
-    # ==========================
-    # Attachment Analysis
-    # ==========================
-    st.header("📎 Attachment Analysis")
-
-    st.metric(
-        "Risk Score",
-        attachment_result["risk_score"]
+    # Navigation links
+    st.markdown(
+        '<div class="sidebar-section">WORKSPACE</div>',
+        unsafe_allow_html=True
     )
 
-    if attachment_result["findings"]:
-        st.warning("Findings")
-        for finding in attachment_result["findings"]:
-            st.write(f"• {finding}")
+    st.page_link(
+        dashboard,
+        label="Dashboard",
+        icon=":material/dashboard:"
+    )
 
-    if email["attachments"]:
-        st.write("### Attachments")
-        for attachment in email["attachments"]:
-            st.write(f"• {attachment}")
-    else:
-        st.success("No attachments present.")
-
-    st.divider()
-
-    # ==========================
-    # Indicators of Compromise (IOCs)
-    # ==========================
-    st.header("🚨 Indicators of Compromise (IOCs)")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.subheader("📧 Email Addresses")
-
-        if iocs["emails"]:
-            for item in iocs["emails"]:
-                st.write(f"• {item}")
-        else:
-            st.write("None")
-
-        st.subheader("🌐 Domains")
-
-        if iocs["domains"]:
-            for item in iocs["domains"]:
-                st.write(f"• {item}")
-        else:
-            st.write("None")
-
-        st.subheader("🖥️ IP Addresses")
-
-        if iocs["ips"]:
-            for item in iocs["ips"]:
-                st.write(f"• {item}")
-        else:
-            st.write("None")
-
-    with col2:
-        st.subheader("🔗 URLs")
-
-        if iocs["urls"]:
-            for item in iocs["urls"]:
-                st.write(f"• {item}")
-        else:
-            st.write("None")
-
-        st.subheader("📎 Attachments")
-
-        if iocs["attachments"]:
-            for item in iocs["attachments"]:
-                st.write(f"• {item}")
-        else:
-            st.write("None")       
-
-    # ==========================
-    # Email Body
-    # ==========================
-    st.header("📄 Email Body")
-
-    st.text_area(
-        "Body",
-        email["body"],
-        height=300
+    st.page_link(
+        investigation,
+        label="Email Investigation",
+        icon=":material/mark_email_unread:"
     )
 
     st.divider()
 
-    # ==========================
-    # AI Investigation Report
-    # ==========================
-    st.header("🤖 AI Investigation Report")
+    st.caption("AI PHISHING INVESTIGATION AGENT")
 
-    st.markdown(report)
-    # ==========================
-    # Investigation PDF Report
-    # ==========================
 
-    st.divider()
+# ==========================
+# RUN SELECTED PAGE
+# ==========================
 
-    st.header("📄 Investigation Report")
-
-    with open(pdf_filename, "rb") as pdf_file:
-
-        st.download_button(
-            label="⬇ Download Investigation Report",
-            data=pdf_file,
-            file_name=pdf_filename,
-            mime="application/pdf",
-        )
+navigation.run()
